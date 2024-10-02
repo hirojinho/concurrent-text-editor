@@ -1,22 +1,32 @@
 import React from 'react';
 import { Container, Typography, TextField } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
-
-const socket = io('http://localhost:4000'); // Change this to your server URL if different
 
 const App: React.FC = () => {
+	const [socket, setSocket] = useState<WebSocket | null>(null);
 	const [document, setDocument] = useState('');
 
 	useEffect(() => {
-		// Listen for document updates from the server
-		socket.on('document-update', (data: string) => {
-			setDocument(data);
-		});
+		// Create a WebSocket connection to the Go Server
+		const ws =  new WebSocket('ws://localhost:8080/ws');
 
-		// Clean up the socket connection on component unmount
+		// Event listener for messages from the server
+		ws.onmessage = event => {
+			console.log('Received message:', event.data);
+			setDocument(event.data);
+		}
+
+		// Event listener for the connection close event
+		ws.onclose = () => {
+			console.log('WebSocket connection closed');
+		}
+
+		// Set the WebSocket connection to the state
+		setSocket(ws);
+
+		// Clean up the WebSocket connection on component unmount
 		return () => {
-			socket.off('document-update');
+			ws.close();
 		};
 	}, []);
 
@@ -24,7 +34,9 @@ const App: React.FC = () => {
 		const newText = event.target.value;
 		setDocument(newText);
 		// Emit the new text to the server
-		socket.emit('document-edit', newText);
+		if (socket) {
+			socket.send(newText);
+		}
 	};
 
 	return (
