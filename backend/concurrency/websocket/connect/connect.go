@@ -13,7 +13,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func HandleConnection(writer http.ResponseWriter, req *http.Request) {
+func HandleWebSocket(writer http.ResponseWriter, req *http.Request) {
 	// Upgrade the HTTP connection to a WebSocket connection
 	conn, readErr := upgrader.Upgrade(writer, req, nil)
 	if readErr != nil {
@@ -24,6 +24,10 @@ func HandleConnection(writer http.ResponseWriter, req *http.Request) {
 
 	log.Println("New connection established, client connected")
 
+	go handleConnection(conn)
+}
+
+func handleConnection(conn *websocket.Conn) {
 	for {
 		// Read message from client
 		var messageType int
@@ -35,6 +39,8 @@ func HandleConnection(writer http.ResponseWriter, req *http.Request) {
 			log.Println("Error reading message:", err)
 			break
 		}
+
+		log.Printf("Received message: %s", message)
 
 		var writerErr error
 		// Echo the message back to the client

@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/ws", connect.HandleConnection) // Set up the WebSocket endpoint
+	http.HandleFunc("/ws", connect.HandleWebSocket) // Set up the WebSocket endpoint
 
 	fmt.Println("Starting server on :8080")
 	var err error
