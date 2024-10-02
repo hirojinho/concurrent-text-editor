@@ -3,6 +3,7 @@ package connect
 import (
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -13,6 +14,13 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// Global list of clients (WebSocket connections)
+var clients = make(map[*websocket.Conn]bool)
+var mutex = sync.Mutex{}
+
+// Broadcast channel to send messages to all clients
+var broadcast = make(chan []byte)
+
 func HandleWebSocket(writer http.ResponseWriter, req *http.Request) {
 	// Upgrade the HTTP connection to a WebSocket connection
 	conn, readErr := upgrader.Upgrade(writer, req, nil)
@@ -20,7 +28,11 @@ func HandleWebSocket(writer http.ResponseWriter, req *http.Request) {
 		log.Println("Error upgrading connection:", readErr)
 		return
 	}
-	defer conn.Close()
+
+	// Add the new client to the list of clients
+	mutex.Lock()
+	clients[conn] = true
+	mutex.Unlock()
 
 	log.Println("New connection established, client connected")
 
@@ -28,13 +40,20 @@ func HandleWebSocket(writer http.ResponseWriter, req *http.Request) {
 }
 
 func handleConnection(conn *websocket.Conn) {
+	defer func() {
+		// Remove the client from the list of clients when the connection is closed
+		mutex.Lock()
+		delete(clients, conn)
+		mutex.Unlock()
+		conn.Close()
+	}()
+
 	for {
 		// Read message from client
-		var messageType int
 		var message []byte
 		var err error
 
-		messageType, message, err = conn.ReadMessage()
+		_, message, err = conn.ReadMessage()
 		if err != nil {
 			log.Println("Error reading message:", err)
 			break
@@ -42,11 +61,27 @@ func handleConnection(conn *websocket.Conn) {
 
 		log.Printf("Received message: %s", message)
 
-		var writerErr error
 		// Echo the message back to the client
-		if writerErr = conn.WriteMessage(messageType, message); writerErr != nil {
-			log.Println("Error writing message:", writerErr)
-			break
+		broadcast <- message
+	}
+}
+
+func HandleBroadcast() {
+	for {
+		message := <-broadcast
+
+		// Lock the clients map to ensure thread safety
+		mutex.Lock()
+
+		// Broadcast the message to all clients
+		for client := range clients {
+			var writeErr error
+			if writeErr = client.WriteMessage(websocket.TextMessage, message); writeErr != nil {
+				log.Println("Error writing message:", writeErr)
+				break
+			}
 		}
+
+		mutex.Unlock()
 	}
 }

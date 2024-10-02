@@ -10,6 +10,8 @@ import (
 )
 
 func main() {
+	go connect.HandleBroadcast()
+
 	http.HandleFunc("/ws", connect.HandleWebSocket) // Set up the WebSocket endpoint
 
 	fmt.Println("Starting server on :8080")
