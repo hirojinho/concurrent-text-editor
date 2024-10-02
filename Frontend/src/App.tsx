@@ -12,7 +12,6 @@ const App: React.FC = () => {
 
 		// Event listener for messages from the server
 		ws.onmessage = event => {
-			console.log('Received message:', event.data);
 			setDocument(event.data);
 		}
 

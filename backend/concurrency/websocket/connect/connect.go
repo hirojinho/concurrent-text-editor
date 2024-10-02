@@ -36,8 +36,6 @@ func HandleConnection(writer http.ResponseWriter, req *http.Request) {
 			break
 		}
 
-		log.Printf("Received message: %s", message)
-
 		var writerErr error
 		// Echo the message back to the client
 		if writerErr = conn.WriteMessage(messageType, message); writerErr != nil {
