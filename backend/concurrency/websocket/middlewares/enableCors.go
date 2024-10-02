@@ -5,7 +5,7 @@ import (
 )
 
 // CORS middleware to add the necessary headers
-func enableCors(next http.Handler) http.Handler {
+func EnableCors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
 		writer.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
 		writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")

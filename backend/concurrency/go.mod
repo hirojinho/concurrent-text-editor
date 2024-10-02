@@ -1,4 +1,4 @@
-module concurrency-backend
+module backend/concurrency
 
 go 1.23.2
 
