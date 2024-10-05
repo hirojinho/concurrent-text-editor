@@ -1,51 +1,40 @@
 -module(main).
--export([start/0, init/0, consume/1, publish/1]).
+-export([start/0, publish/1]).
 
 -include_lib("amqp_client/include/amqp_client.hrl").
 
 start() ->
-    application:ensure_started(amqp_client),
-    {ok, _} = rabbitmq:start(),
-    init().
-
-init() ->
     % Open a connection to the RabbitMQ server
-    {ok, Connection} = amqp_connection:start("localhost", 5672, <<"guest">>, <<"guest">>),
+    {ok, Connection} = amqp_connection:start(#amqp_params_network{
+        host = "localhost",
+        heartbeat = 30
+    }),
     {ok, Channel} = amqp_connection:open_channel(Connection),
-    Declare = #'exchange.declare'{
-        exchange = <<"my_exchange">>,
-        type = <<"direct">>,
-        durable = true
-    },
-    amqp_channel:call(Channel, Declare),
-    consume(Channel).
-
-consume(Channel) ->
-    Queue = <<"my_queue">>,
+    
     amqp_channel:call(Channel, #'queue.declare'{
-        queue = Queue,
-        durable = true
+        queue = <<"Hello">>
     }),
-    amqp_channel:call(Channel, #'queue.bind'{
-        queue = Queue,
-        exchange = <<"my_exchange">>,
-        routing_key = <<"my_routing_key">>
-    }),
-    amqp_channel:subscribe(Channel, Queue, self()),
+    io:format(" [*] Waiting for messages. To exit press CTRL+C~n"),
+
+    Method = #'basic.consume'{
+        queue = <<"Hello">>,
+        no_ack = true
+    },
+    amqp_channel:subscribe(Channel, Method, self()),
     loop(Channel).
 
 loop(Channel) ->
     receive
-        {#'basic.deliver'{delivery_tag = Tag}, Body} ->
-            io:format("Received: ~s~n", [Body]),
-            amqp_channel:ack(Channel, Tag),
+        #'basic.consume_ok'{} ->
+            io:format(" [x] Saw basic.consume_ok~n"),
             loop(Channel);
-        _Other ->
+        {#'basic.deliver'{}, #amqp_msg{payload = Body}} ->
+            io:format(" [x] Received ~p~n", [Body]),
             loop(Channel)
-end.
+    end.
 
 publish(Message) ->
-    {ok, Connection} = amqp_connection:start("localhost", 5672, <<"guest">>, <<"guest">>),
+    {ok, Connection} = amqp_connection:start(#amqp_params_network{host = "localhost"}),
     {ok, Channel} = amqp_connection:open_channel(Connection),
     Publish = #'basic.publish'{
         routing_key = <<"my_routing_key">>,
