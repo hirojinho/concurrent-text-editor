@@ -5,10 +5,16 @@
     {mod, {actor_app, []}},
     {applications, [
         kernel,
-        stdlib
+        stdlib,
+        amqp_client
     ]},
     {env, []},
-    {modules, []},
+    {modules, [
+        actor_app,
+        actor_sup,
+        receiver,
+        sender
+    ]},
     {licenses, ["Apache-2.0"]},
     {links, []}
  ]}.
