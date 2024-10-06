@@ -1,5 +1,5 @@
--module(main).
--export([start/0, publish/1]).
+-module(receiver).
+-export([start/0]).
 
 -include_lib("amqp_client/include/amqp_client.hrl").
 
@@ -30,15 +30,6 @@ loop(Channel) ->
             loop(Channel);
         {#'basic.deliver'{}, #amqp_msg{payload = Body}} ->
             io:format(" [x] Received ~p~n", [Body]),
+            sender:publish(Body),
             loop(Channel)
     end.
-
-publish(Message) ->
-    {ok, Connection} = amqp_connection:start(#amqp_params_network{host = "localhost"}),
-    {ok, Channel} = amqp_connection:open_channel(Connection),
-    Publish = #'basic.publish'{
-        routing_key = <<"my_routing_key">>,
-        exchange = <<"my_exchange">>
-    },
-    amqp_channel:call(Channel, Publish, #amqp_msg{payload = Message}),
-    amqp_connection:close(Connection).
