@@ -13,7 +13,10 @@
         actor_app,
         actor_sup,
         receiver,
-        sender
+        sender,
+        doc,
+        doc_registry,
+        doc_queue
     ]},
     {licenses, ["Apache-2.0"]},
     {links, []}
