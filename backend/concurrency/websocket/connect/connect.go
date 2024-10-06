@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"sync"
 
+	"backend/concurrency/websocket/publisher"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -70,18 +72,6 @@ func HandleBroadcast() {
 	for {
 		message := <-broadcast
 
-		// Lock the clients map to ensure thread safety
-		mutex.Lock()
-
-		// Broadcast the message to all clients
-		for client := range clients {
-			var writeErr error
-			if writeErr = client.WriteMessage(websocket.TextMessage, message); writeErr != nil {
-				log.Println("Error writing message:", writeErr)
-				break
-			}
-		}
-
-		mutex.Unlock()
+		publisher.Send(message)
 	}
 }
