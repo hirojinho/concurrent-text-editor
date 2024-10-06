@@ -4,6 +4,9 @@
 -include_lib("amqp_client/include/amqp_client.hrl").
 
 start() ->
+    spawn(?MODULE, connect, []).
+
+connect() ->
     % Open a connection to the RabbitMQ server
     {ok, Connection} = amqp_connection:start(#amqp_params_network{
         host = "localhost",
