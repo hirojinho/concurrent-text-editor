@@ -68,7 +68,7 @@ func handleConnection(conn *websocket.Conn) {
 	}
 }
 
-func HandleBroadcast() {
+func PublishMessage() {
 	for {
 		message := <-broadcast
 

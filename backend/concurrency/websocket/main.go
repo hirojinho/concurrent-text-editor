@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	go connect.HandleBroadcast()
+	go connect.PublishMessage()
 
 	http.HandleFunc("/ws", connect.HandleWebSocket) // Set up the WebSocket endpoint
 
