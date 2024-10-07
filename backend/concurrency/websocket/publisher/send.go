@@ -2,11 +2,17 @@ package publisher
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
+
+type DocumentChange struct {
+	DocId  string `json:"doc_id"`
+	Change string `json:"change"`
+}
 
 func failOnError(err error, msg string) {
 	if err != nil {
@@ -32,17 +38,29 @@ func Send(body []byte) {
 		nil,     //arguments
 	)
 	failOnError(err, "Failed to declare a queue")
+
+	// Create a new DocumentChange struct and marshall it to JSON
+	docChange := DocumentChange{
+		DocId:  "123",
+		Change: "This is a test change",
+	}
+
+	jsonDocChange, err := json.Marshal(docChange)
+	failOnError(err, "Failed to marshal document change to JSON")
+
+	// Set a timeout context for the publish operation
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Publish the JSON encoded message to the queue
 	err = ch.PublishWithContext(ctx,
 		"",     // exchange
 		q.Name, // routing key
 		false,  // mandatory
 		false,  // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        body,
+			ContentType: "application/json",
+			Body:        jsonDocChange,
 		},
 	)
 	failOnError(err, "Failed to publish a message")
