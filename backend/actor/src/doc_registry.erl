@@ -9,8 +9,8 @@
 -record(state, {actors = #{}}).
 
 start_link() ->
-    {ok, Pid} = gen_server:start_link(?MODULE, [], []),
-    Pid.
+    {ok, Pid} = gen_server:start_link({local, ?MODULE}, ?MODULE, [], []),
+    {ok, Pid}.
 
 stop() ->
     gen_server:call(?MODULE, stop).
@@ -30,6 +30,7 @@ update_queue(DocId, QueuePid) ->
     gen_server:call(?MODULE, {update_queue, DocId, QueuePid}).
 
 init([]) ->
+    io:format("Doc registry started with pid ~p~n", [self()]),
     {ok, #state{}}.
 
 handle_call({register, DocId, {ActorPid, QueuePid}}, _From, State) ->
@@ -42,7 +43,9 @@ handle_call({lookup, DocId}, _From, State) ->
         undefined ->
             {reply, {error, not_found}, State};
         {ActorPid, QueuePid} ->
-            {reply, {ok, {ActorPid, QueuePid}}, State}
+            {reply, {ok, {ActorPid, QueuePid}}, State};
+        _Other ->
+            {reply, {error, not_found}, State}
     end;
 
 handle_call({unregister_queue, DocId}, _From, State) ->
