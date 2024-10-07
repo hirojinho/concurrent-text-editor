@@ -16,9 +16,9 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// Global list of clients (WebSocket connections)
-var clients = make(map[*websocket.Conn]bool)
-var mutex = sync.Mutex{}
+// Global list of Clients (WebSocket connections)
+var Clients = make(map[*websocket.Conn]bool)
+var Mutex = sync.Mutex{}
 
 // Broadcast channel to send messages to all clients
 var broadcast = make(chan []byte)
@@ -32,9 +32,9 @@ func HandleWebSocket(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	// Add the new client to the list of clients
-	mutex.Lock()
-	clients[conn] = true
-	mutex.Unlock()
+	Mutex.Lock()
+	Clients[conn] = true
+	Mutex.Unlock()
 
 	log.Println("New connection established, client connected")
 
@@ -44,9 +44,9 @@ func HandleWebSocket(writer http.ResponseWriter, req *http.Request) {
 func handleConnection(conn *websocket.Conn) {
 	defer func() {
 		// Remove the client from the list of clients when the connection is closed
-		mutex.Lock()
-		delete(clients, conn)
-		mutex.Unlock()
+		Mutex.Lock()
+		delete(Clients, conn)
+		Mutex.Unlock()
 		conn.Close()
 	}()
 
