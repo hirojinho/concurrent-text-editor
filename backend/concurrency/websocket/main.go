@@ -7,10 +7,13 @@ import (
 
 	"backend/concurrency/websocket/connect"
 	"backend/concurrency/websocket/middlewares"
+	"backend/concurrency/websocket/receiver"
 )
 
 func main() {
 	go connect.PublishMessage()
+
+	go receiver.Receive()
 
 	http.HandleFunc("/ws", connect.HandleWebSocket) // Set up the WebSocket endpoint
 
