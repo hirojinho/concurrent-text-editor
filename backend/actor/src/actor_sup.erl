@@ -14,8 +14,7 @@
 -define(SERVER, ?MODULE).
 
 start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []),
-    receiver:start().
+    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 %% sup_flags() = #{strategy => strategy(),         % optional
 %%                 intensity => non_neg_integer(), % optional
@@ -27,12 +26,24 @@ start_link() ->
 %%                  type => worker(),       % optional
 %%                  modules => modules()}   % optional
 init([]) ->
+    % Start the doc_registry and receiver processes using ChildSpecs
+    ChildSpecs = [
+        {receiver, {receiver, start, []}, permanent, 5000, worker, [receiver]},
+        {doc_registry, {doc_registry, start_link, []}, permanent, 5000, worker, [doc_registry]}
+    ],
+
+    % Log child specs for debugging
+    lists:foreach(fun({Name, Start, _, _, _, _}) -> 
+        io:format("Starting child process: ~p, Start: ~p~n", [Name, Start])
+    end, ChildSpecs),
+
     SupFlags = #{
         strategy => one_for_all,
         intensity => 0,
         period => 1
     },
-    ChildSpecs = [],
+
     {ok, {SupFlags, ChildSpecs}}.
+    
 
 %% internal functions

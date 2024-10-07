@@ -10,7 +10,8 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
-    actor_sup:start_link().
+    {ok, Pid} = actor_sup:start_link(),
+    {ok, Pid}.
 
 stop(_State) ->
     ok.
